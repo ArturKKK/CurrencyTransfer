@@ -1,0 +1,10 @@
+listen:
+  host: 0.0.0.0
+  port: 8080
+postgres:
+  database: postgres
+  host: localhost
+  port: 5432
+  username: postgres
+  password: victoriassecret
+  ssl_mode: disable
