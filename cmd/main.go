@@ -1,10 +1,6 @@
 package main
 
 import (
-	"github.com/ArturKKK/CurrencyTransfer/internal/config"
-	"github.com/ArturKKK/CurrencyTransfer/internal/db"
-	"github.com/ArturKKK/CurrencyTransfer/internal/handler"
-	"github.com/ArturKKK/CurrencyTransfer/pkg/logging"
 	"context"
 	"fmt"
 	"log"
@@ -12,6 +8,12 @@ import (
 	"os"
 	"os/signal"
 	"time"
+
+	rediscache "github.com/ArturKKK/CurrencyTransfer/internal/cache/redis"
+	"github.com/ArturKKK/CurrencyTransfer/internal/config"
+	"github.com/ArturKKK/CurrencyTransfer/internal/db"
+	"github.com/ArturKKK/CurrencyTransfer/internal/handler"
+	"github.com/ArturKKK/CurrencyTransfer/pkg/logging"
 )
 
 const (
@@ -22,9 +24,10 @@ func main() {
 	logger := logging.GetLogger()
 	cfg := config.GetConfig()
 	ctx := context.Background()
+	cache := rediscache.GetClient(&cfg.Redis)
 
 	postgres, err := db.NewDatabase(&cfg.Postgres)
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 	logger.Info("postgres started")
@@ -55,9 +58,9 @@ func main() {
 		}
 	}()
 
-	handler := handler.NewHander(postgres)
+	handler := handler.NewHander(postgres, cache)
 	srv := &http.Server{
-		Addr: fmt.Sprintf(":%s", cfg.Listen.Port),
+		Addr:    fmt.Sprintf(":%s", cfg.Listen.Port),
 		Handler: handler.Router(),
 	}
 
@@ -76,6 +79,6 @@ func main() {
 	defer cancel()
 	_ = srv.Shutdown(ctx)
 
-	done <- true // stop the goroutine 
+	done <- true // stop the goroutine
 
 }

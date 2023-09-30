@@ -1,13 +1,14 @@
 package main
 
 import (
-	"github.com/ArturKKK/CurrencyTransfer/internal/db"
 	"context"
 	"encoding/xml"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/ArturKKK/CurrencyTransfer/internal/db"
 
 	"golang.org/x/net/html/charset"
 )
@@ -17,8 +18,8 @@ type ValCurs struct {
 }
 
 type Valute struct {
-	CharCode string `xml:"CharCode"`
-	VunitRate    string `xml:"VunitRate"`
+	CharCode  string `xml:"CharCode"`
+	VunitRate string `xml:"VunitRate"`
 }
 
 func Parse(url string, db *db.Database) {
@@ -46,7 +47,7 @@ func Parse(url string, db *db.Database) {
 	for _, valute := range valCurs.Valutes {
 		VunitRateStr := strings.Replace(valute.VunitRate, ",", ".", -1)
 		vunitRate, err := strconv.ParseFloat(VunitRateStr, 64)
-		if err != nil{
+		if err != nil {
 			log.Fatal(err)
 		}
 		db.Save(context.TODO(), valute.CharCode, vunitRate)

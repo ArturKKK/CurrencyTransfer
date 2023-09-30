@@ -7,10 +7,14 @@ import (
 )
 
 func (h *Handler) GetCurrencies(w http.ResponseWriter, r *http.Request) {
-	currencies, err := h.db.GetCurrencies(context.TODO())
+	currencies, err := h.cache.Get()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		currencies, err = h.db.GetCurrencies(context.TODO())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = h.cache.Set(currencies)
 	}
 
 	w.WriteHeader(http.StatusOK)

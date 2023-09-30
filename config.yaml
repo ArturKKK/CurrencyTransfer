@@ -8,3 +8,9 @@ postgres:
   username: postgres
   password: victoriassecret
   ssl_mode: disable
+redis:
+  host: localhost
+  port: 6379
+  password: 
+  database: 0
+  expires: 3600 #in second

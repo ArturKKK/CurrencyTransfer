@@ -14,20 +14,28 @@ func (h *Handler) ConvertCurrency(w http.ResponseWriter, r *http.Request) {
 	amountStr := r.URL.Query().Get("amount")
 
 	amount, err := strconv.ParseFloat(amountStr, 64)
-	if err != nil{
+	if err != nil {
 		http.Error(w, "invalid amount", http.StatusBadRequest)
 		return
 	}
 
-	fromRate, err := h.db.GetCurrencyRate(context.TODO(), from)
+	fromRate, err := h.cache.GetOne(from)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		fromRate, err = h.db.GetCurrencyRate(context.TODO(), from)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		h.cache.SetOne(from, fromRate)
 	}
 
-	toRate, err := h.db.GetCurrencyRate(context.TODO(), to)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	toRate, err := h.cache.GetOne(to)
+	if err != nil{
+		toRate, err = h.db.GetCurrencyRate(context.TODO(), to)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		h.cache.SetOne(to, toRate)
 	}
 
 	result := (amount / fromRate) * toRate

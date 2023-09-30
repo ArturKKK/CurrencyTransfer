@@ -1,9 +1,11 @@
 package config
 
 import (
-	"github.com/ArturKKK/CurrencyTransfer/internal/db"
 	"log"
 	"sync"
+
+	rediscache "github.com/ArturKKK/CurrencyTransfer/internal/cache/redis"
+	"github.com/ArturKKK/CurrencyTransfer/internal/db"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -14,6 +16,7 @@ type Config struct {
 		Port string `yaml:"port"`
 	} `yaml:"listen"`
 	Postgres db.Config `yaml:"postgres"`
+	Redis rediscache.Config `yaml:"redis"`
 }
 
 var instance *Config
