@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"context"
@@ -9,18 +9,8 @@ import (
 	"strings"
 
 	"github.com/ArturKKK/CurrencyTransfer/internal/db"
-
 	"golang.org/x/net/html/charset"
 )
-
-type ValCurs struct {
-	Valutes []Valute `xml:"Valute"`
-}
-
-type Valute struct {
-	CharCode  string `xml:"CharCode"`
-	VunitRate string `xml:"VunitRate"`
-}
 
 func Parse(url string, db *db.Database) {
 	client := &http.Client{}

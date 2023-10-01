@@ -8,15 +8,18 @@ import (
 	"time"
 
 	"github.com/ArturKKK/CurrencyTransfer/internal/db"
+	"github.com/ArturKKK/CurrencyTransfer/pkg/logging"
+	"github.com/ArturKKK/CurrencyTransfer/pkg/utils"
 	"github.com/redis/go-redis/v9"
 )
 
 type RedisCache struct {
 	config *Config
 	client *redis.Client
+	logger *logging.Logger
 }
 
-func GetClient(config *Config) *RedisCache {
+func GetClient(config *Config, logger *logging.Logger) *RedisCache {
 	//Standart port: 6379
 	client := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%s", config.Host, config.Port),
@@ -24,14 +27,25 @@ func GetClient(config *Config) *RedisCache {
 		DB:       config.DB,
 	})
 
-	_, err := client.Ping(context.TODO()).Result()
+	var err error
+	utils.DoWithTries(func() error {
+		_, err = client.Ping(context.TODO()).Result()
+		if err != nil {
+			logger.Info("failed ping redis")
+			return err
+		}
+		logger.Info("redis pinged EEE")
+		return nil
+	}, config.MaxAttempts, 5*time.Second)
+
 	if err != nil {
-		log.Fatalf("redis: %v", err)
+		logger.Fatal("ping redis error")
 	}
 
 	return &RedisCache{
 		config: config,
 		client: client,
+		logger: logger,
 	}
 }
 

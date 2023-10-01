@@ -4,31 +4,54 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"time"
 
+	"github.com/ArturKKK/CurrencyTransfer/pkg/logging"
+	"github.com/ArturKKK/CurrencyTransfer/pkg/utils"
 	_ "github.com/lib/pq"
 )
 
 type Database struct {
 	client *sql.DB
+	logger *logging.Logger
 }
 
-func NewDatabase(config *Config) (*Database, error) {
+func NewDatabase(config *Config, logger *logging.Logger) (*Database, error) {
 	connInfo := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		config.Host, config.Port, config.Username, config.Password, config.Database, config.SslMode,
 	)
 
-	client, err := sql.Open("postgres", connInfo)
-	if err != nil {
-		log.Fatal(err)
-	}
+	var client *sql.DB
+	var err error
 
-	if err = client.Ping(); err != nil {
-		log.Fatal(err)
-	}
+	utils.DoWithTries(func() error {
+		client, err = sql.Open("postgres", connInfo)
+		if err != nil {
+			logger.Info("fatal Open postgres")
+			return err
+		}
+		logger.Info("Postgres open EEE")
+		return nil
+	}, config.MaxAttempts, 5 * time.Second)
 
-	return &Database{client: client}, nil
+	utils.DoWithTries(func() error {
+		if err := client.Ping(); err != nil {
+			logger.Info("fatal ping postgres")
+			return err
+		}
+		logger.Info("postgres ping EEE")
+		return nil
+	}, config.MaxAttempts, 5 * time.Second)
+
+	// if err := client.Ping(); err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	return &Database{
+		client: client,
+		logger: logger,
+		}, nil
 }
 
 func (db *Database) Init(ctx context.Context) error {

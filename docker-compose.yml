@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    image: currservice:local
+    container_name: cs-backend
+    ports:
+      - 8080:8080
+    depends_on:
+      - redis
+      - postgresql
+    networks:
+      - cs
+    restart: on-failure:5
+  redis:
+    image: redis
+    container_name: cs-redis
+    ports:
+      - 26379:6379
+    depends_on:
+      - postgresql
+    networks:
+      - cs
+  postgresql:
+    image: postgres:15.4-alpine
+    container_name: cs-psql
+    ports:
+      - 5436:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=victoriassecret
+      - POSTGRES_DB=postgres
+    networks: 
+      - cs
+
+networks:
+  cs:

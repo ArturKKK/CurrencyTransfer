@@ -13,6 +13,7 @@ import (
 	"github.com/ArturKKK/CurrencyTransfer/internal/config"
 	"github.com/ArturKKK/CurrencyTransfer/internal/db"
 	"github.com/ArturKKK/CurrencyTransfer/internal/handler"
+	"github.com/ArturKKK/CurrencyTransfer/internal/parser"
 	"github.com/ArturKKK/CurrencyTransfer/pkg/logging"
 )
 
@@ -24,9 +25,9 @@ func main() {
 	logger := logging.GetLogger()
 	cfg := config.GetConfig()
 	ctx := context.Background()
-	cache := rediscache.GetClient(&cfg.Redis)
+	cache := rediscache.GetClient(&cfg.Redis, logger)
 
-	postgres, err := db.NewDatabase(&cfg.Postgres)
+	postgres, err := db.NewDatabase(&cfg.Postgres, logger)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,7 +40,7 @@ func main() {
 	logger.Info("postgres initialized")
 
 	logger.Info("start parsing")
-	Parse(url, postgres)
+	parser.Parse(url, postgres)
 
 	ticker := time.NewTicker(4 * time.Hour)
 	defer ticker.Stop()
@@ -52,7 +53,7 @@ func main() {
 			case <-done:
 				return
 			case <-ticker.C:
-				Parse(url, postgres)
+				parser.Parse(url, postgres)
 				logger.Info("tick-tick")
 			}
 		}
