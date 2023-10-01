@@ -44,8 +44,10 @@ func main() {
 	logger.Info("postgres initialized")
 
 	logger.Info("start parsing")
-	parser.Parse(url, postgres, logger)
-
+	err = parser.Parse(url, postgres, logger)
+	if err != nil {
+		logger.Errorf("failed to parse")
+	}
 	ticker := time.NewTicker(4 * time.Hour)
 	defer ticker.Stop()
 
@@ -58,8 +60,12 @@ func main() {
 				return
 			case <-ticker.C:
 				logger.Info("start parsing")
-				parser.Parse(url, postgres, logger)
+				err = parser.Parse(url, postgres, logger)
+				if err != nil {
+					logger.Errorf("failed to parse")
+				} else {
 				logger.Info("parsing completed successfully")
+				}
 			}
 		}
 	}()
