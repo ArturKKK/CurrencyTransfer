@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/ArturKKK/CurrencyTransfer/internal/db"
@@ -19,40 +18,46 @@ type RedisCache struct {
 	logger *logging.Logger
 }
 
-func GetClient(config *Config, logger *logging.Logger) *RedisCache {
-	//Standart port: 6379
+func GetClient(config *Config, logger *logging.Logger) (*RedisCache, error) {
+	connInfo := fmt.Sprintf("%s:%s", config.Host, config.Port)
+
 	client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", config.Host, config.Port),
+		Addr:     connInfo,
 		Password: config.Password,
 		DB:       config.DB,
 	})
+
+	logger.Infof("connStr for redis: %s", connInfo)
 
 	var err error
 	utils.DoWithTries(func() error {
 		_, err = client.Ping(context.TODO()).Result()
 		if err != nil {
-			logger.Info("failed ping redis")
+			logger.Errorf("failed ping redis: %v", err)
 			return err
 		}
-		logger.Info("redis pinged EEE")
+		logger.Errorf("redis pinged: %v", err)
+		err = nil
 		return nil
 	}, config.MaxAttempts, 5*time.Second)
 
 	if err != nil {
-		logger.Fatal("ping redis error")
+		logger.Errorf("failed to connect to redis: %v", err)
+		return nil, err
 	}
 
 	return &RedisCache{
 		config: config,
 		client: client,
 		logger: logger,
-	}
+	}, nil
 }
 
 func (r *RedisCache) SetOne(key string, vuniteRate float64) error {
 	marshalVunite, err := json.Marshal(vuniteRate)
 	if err != nil {
-		log.Fatal(err)
+		r.logger.Errorf("failed to marshal: %v", err)
+		return err
 	}
 
 	r.client.Set(context.TODO(), key, marshalVunite, time.Duration(r.config.Expires)*time.Second)
@@ -68,7 +73,8 @@ func (r *RedisCache) GetOne(key string) (float64, error) {
 	var curr float64
 	err = json.Unmarshal([]byte(val), &curr)
 	if err != nil {
-		log.Fatal(err)
+		r.logger.Errorf("failed to unmarshall: %v", err)
+		return 0, err
 	}
 
 	return curr, nil
@@ -77,7 +83,8 @@ func (r *RedisCache) GetOne(key string) (float64, error) {
 func (r *RedisCache) Set(currencies []db.Currency) error {
 	marshalCurrencies, err := json.Marshal(currencies)
 	if err != nil {
-		log.Fatal(err)
+		r.logger.Errorf("failed to marshal: %v", err)
+		return err
 	}
 
 	r.client.Set(context.TODO(), "All", marshalCurrencies, time.Duration(r.config.Expires)*time.Second)
@@ -93,6 +100,7 @@ func (r *RedisCache) Get() ([]db.Currency, error) {
 	var currs []db.Currency
 	err = json.Unmarshal([]byte(vals), &currs)
 	if err != nil {
+		r.logger.Errorf("failed to unmarshal: %v", err)
 		return nil, err
 	}
 

@@ -12,7 +12,7 @@ postgres:
 redis:
   host: redis
   port: 6379
-  password: 
+  password:
   database: 0
   expires: 3600 #in second
   max_attempts: 5

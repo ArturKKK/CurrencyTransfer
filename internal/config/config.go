@@ -15,8 +15,8 @@ type Config struct {
 		Host string `yaml:"host"`
 		Port string `yaml:"port"`
 	} `yaml:"listen"`
-	Postgres db.Config `yaml:"postgres"`
-	Redis rediscache.Config `yaml:"redis"`
+	Postgres db.Config         `yaml:"postgres"`
+	Redis    rediscache.Config `yaml:"redis"`
 }
 
 var instance *Config

@@ -101,3 +101,4 @@ time="2023-10-01T13:28:45+07:00" level=info msg="postgres started" func="main.ma
 time="2023-10-01T13:28:45+07:00" level=info msg="postgres initialized" func="main.main()" file="main.go,40"
 time="2023-10-01T13:28:45+07:00" level=info msg="start parsing" func="main.main()" file="main.go,42"
 time="2023-10-01T13:28:45+07:00" level=info msg="service started" func="main.main.func2()" file="main.go,69"
+time="2023-10-01T15:03:04+07:00" level=info msg="connStr for redis: redis:6379" func="github.com/ArturKKK/CurrencyTransfer/internal/cache/redis.GetClient()" file="redis-cache.go,30"

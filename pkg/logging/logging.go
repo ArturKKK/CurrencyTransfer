@@ -46,7 +46,6 @@ func (l *Logger) GetLoggerWithField(k string, v interface{}) *Logger {
 	return &Logger{l.WithField(k, v)}
 }
 
-// Если Init() - то вызывать явно; init() - вызывается автоматически, если добавлен пакет
 func init() {
 	l := logrus.New()
 	l.SetReportCaller(true)

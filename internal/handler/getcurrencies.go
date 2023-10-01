@@ -15,6 +15,10 @@ func (h *Handler) GetCurrencies(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		err = h.cache.Set(currencies)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)

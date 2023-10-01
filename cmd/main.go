@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -25,22 +24,27 @@ func main() {
 	logger := logging.GetLogger()
 	cfg := config.GetConfig()
 	ctx := context.Background()
-	cache := rediscache.GetClient(&cfg.Redis, logger)
+
+	cache, err := rediscache.GetClient(&cfg.Redis, logger)
+	if err != nil {
+		logger.Fatalf("failed to connect to redis")
+	}
+	logger.Info("redis started")
 
 	postgres, err := db.NewDatabase(&cfg.Postgres, logger)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatalf("failed to connect to the database: %v", err)
 	}
 	logger.Info("postgres started")
 
 	err = postgres.Init(ctx)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal("failed to initialize database")
 	}
 	logger.Info("postgres initialized")
 
 	logger.Info("start parsing")
-	parser.Parse(url, postgres)
+	parser.Parse(url, postgres, logger)
 
 	ticker := time.NewTicker(4 * time.Hour)
 	defer ticker.Stop()
@@ -53,13 +57,14 @@ func main() {
 			case <-done:
 				return
 			case <-ticker.C:
-				parser.Parse(url, postgres)
-				logger.Info("tick-tick")
+				logger.Info("start parsing")
+				parser.Parse(url, postgres, logger)
+				logger.Info("parsing completed successfully")
 			}
 		}
 	}()
 
-	handler := handler.NewHander(postgres, cache)
+	handler := handler.NewHander(postgres, cache, logger)
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Listen.Port),
 		Handler: handler.Router(),

@@ -21,6 +21,7 @@ func NewDatabase(config *Config, logger *logging.Logger) (*Database, error) {
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		config.Host, config.Port, config.Username, config.Password, config.Database, config.SslMode,
 	)
+	logger.Infof("connStr for postgres: %s", connInfo)
 
 	var client *sql.DB
 	var err error
@@ -28,30 +29,38 @@ func NewDatabase(config *Config, logger *logging.Logger) (*Database, error) {
 	utils.DoWithTries(func() error {
 		client, err = sql.Open("postgres", connInfo)
 		if err != nil {
-			logger.Info("fatal Open postgres")
+			logger.Errorf("fatal open postgres: %v", err)
 			return err
 		}
-		logger.Info("Postgres open EEE")
+		logger.Info("postgres opened")
+		err = nil
 		return nil
-	}, config.MaxAttempts, 5 * time.Second)
+	}, config.MaxAttempts, 5*time.Second)
+
+	if err != nil {
+		logger.Error("failed to connect to postgres")
+		return nil, err
+	}
 
 	utils.DoWithTries(func() error {
 		if err := client.Ping(); err != nil {
-			logger.Info("fatal ping postgres")
+			logger.Errorf("fatal ping postgres: %v", err)
 			return err
 		}
-		logger.Info("postgres ping EEE")
+		logger.Info("postgres pinged")
+		err = nil
 		return nil
-	}, config.MaxAttempts, 5 * time.Second)
+	}, config.MaxAttempts, 5*time.Second)
 
-	// if err := client.Ping(); err != nil {
-	// 	log.Fatal(err)
-	// }
+	if err != nil {
+		logger.Error("failed to ping postgres")
+		return nil, err
+	}
 
 	return &Database{
 		client: client,
 		logger: logger,
-		}, nil
+	}, nil
 }
 
 func (db *Database) Init(ctx context.Context) error {

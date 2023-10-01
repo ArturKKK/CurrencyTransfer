@@ -30,7 +30,7 @@ func (h *Handler) ConvertCurrency(w http.ResponseWriter, r *http.Request) {
 	}
 
 	toRate, err := h.cache.GetOne(to)
-	if err != nil{
+	if err != nil {
 		toRate, err = h.db.GetCurrencyRate(context.TODO(), to)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -41,7 +41,6 @@ func (h *Handler) ConvertCurrency(w http.ResponseWriter, r *http.Request) {
 	result := (amount / fromRate) * toRate
 
 	w.WriteHeader(http.StatusOK)
-
 	encoder := json.NewEncoder(w)
 	_ = encoder.Encode(map[string]float64{"result": result})
 }

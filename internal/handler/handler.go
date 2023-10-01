@@ -3,19 +3,22 @@ package handler
 import (
 	"github.com/ArturKKK/CurrencyTransfer/internal/cache"
 	"github.com/ArturKKK/CurrencyTransfer/internal/db"
+	"github.com/ArturKKK/CurrencyTransfer/pkg/logging"
 
 	"github.com/gorilla/mux"
 )
 
 type Handler struct {
-	db *db.Database
-	cache cache.ValuteCache
+	db     *db.Database
+	cache  cache.ValuteCache
+	logger *logging.Logger
 }
 
-func NewHander(db *db.Database, cache cache.ValuteCache) *Handler {
+func NewHander(db *db.Database, cache cache.ValuteCache, logger *logging.Logger) *Handler {
 	return &Handler{
-		db: db,
-		cache: cache,
+		db:     db,
+		cache:  cache,
+		logger: logger,
 	}
 }
 
